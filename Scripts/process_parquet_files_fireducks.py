@@ -1,5 +1,5 @@
 import os
-import pandas as pd  # Using standard pandas
+import fireducks.pandas as pd  # Using FireDucks for acceleration
 import duckdb
 from datetime import timedelta
 
@@ -19,10 +19,9 @@ selected_tickers = {
 }
 
 # Skip Already Processed Directories
-skip_dirs = {f"xep_m2019{month:02d}" for month in range(1, 13)}  # Skipping xep_m201901 - xep_m201912
+skip_dirs = {f"xep_m2019{month:02d}" for month in range(1, 13)} # Skipping xep_m201901 - xep_m201912
 skip_dirs.update({"xep_m201902_ctm"}) # skip xep_m201902_ctm dir
-skip_dirs.update({f"xep_m2020{month:02d}" for month in range(1, 2)})  # Skipping xep_m202001 - xep_m202002
-skip_dirs.update({f"xep_m2020{month:02d}" for month in range(6, 9)})  # Skipping xep_m202001 - xep_m202002
+skip_dirs.update({f"xep_m2020{month:02d}" for month in range(1, 3)}) # Skipping xep_m202001 - xep_m202002
 
 # Function to Filter Time Ranges
 def filter_time_range(df, time_col, start, end):
@@ -70,12 +69,9 @@ for month_dir in sorted(os.listdir(input_dir)):
 
             # Normalize TIME_M Scale
             max_time = df["TIME_M"].max()
-            if max_time > 1e12:
-                df["TIME_M"] = df["TIME_M"] / 1e9
-            elif max_time > 1e9:
-                df["TIME_M"] = df["TIME_M"] / 1e6
-            elif max_time > 1e6:
-                df["TIME_M"] = df["TIME_M"] / 1e3
+            if max_time > 1e12: df["TIME_M"] = df["TIME_M"] / 1e9
+            elif max_time > 1e9: df["TIME_M"] = df["TIME_M"] / 1e6
+            elif max_time > 1e6: df["TIME_M"] = df["TIME_M"] / 1e3
 
             # Convert TIME_M to timedelta
             df["TIME_M"] = pd.to_timedelta(df["TIME_M"], unit="s")
@@ -101,7 +97,7 @@ for month_dir in sorted(os.listdir(input_dir)):
                 print(f"[WARNING] No pre-market or post-market data found in {file}. Skipping.")
                 continue
 
-            # Save Processed Data
+            # Save Processed Data with FireDucks Acceleration
             output_path = os.path.join(output_month_dir, f"filtered_{file}")
             combined_data.to_parquet(output_path, index=False)
 
